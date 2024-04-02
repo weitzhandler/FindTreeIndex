@@ -112,13 +112,26 @@ public class TreeIndexTests
 	[Fact]
 	public void Test34_27_0()
 	{
-		var _0 = root;
-		var _27 = root[3][0];
 		var _34 = root[3][1][1];
+		var _27 = root[3][0];
+		var _0 = root;
 
-		var result = root.FindIndices([_0, _27, _34]);
+		var result = root.FindIndices([_34, _27, _0]);
 
-		Assert.Equal([0, 27, 34], result);
+		Assert.Equal([34, 27, 0], result);
+	}
+
+	[Fact]
+	public void Test34_None_27_0()
+	{
+		var _34 = root[3][1][1];
+		var none = new Node(-1, []);
+		var _27 = root[3][0];
+		var _0 = root;
+
+		var result = root.FindIndices([_34, none, _27, _0]);
+
+		Assert.Equal([34, -1, 27, 0], result);
 	}
 
 	[Fact]
@@ -142,37 +155,35 @@ public record Node(int Index, Node[] Children)
 		return results.FirstOrDefault(-1);
 	}
 
-	public int[] FindIndices(Node[] candidates)
+	public int[] FindIndices(IEnumerable<Node> candidates)
 	{
-		var index = 0;
-		var result = FindIndices(this, candidates, ref index);
+		var currentIndex = 0;
+		var results = new Dictionary<Node, int>();
+		var searchableCandidates = candidates.ToList();
 
-		return result.Values.ToArray();
-	}
-
-	private IDictionary<Node, int> FindIndices(Node root, Node[] candidates, ref int currentIndex, IDictionary<Node, int>? previousResults = null)
-	{
-		previousResults ??= ImmutableDictionary<Node, int>.Empty;
-
-		if (!candidates.Any())
+		void FindIndices(Node node)
 		{
-			return previousResults;
+			if (searchableCandidates.Count == 0)
+			{
+				return;
+			}
+
+			if (searchableCandidates.Contains(node))
+			{
+				results[node] = currentIndex;
+				searchableCandidates.Remove(node);
+			}
+
+			foreach (var child in node.Children)
+			{
+				currentIndex++;
+				FindIndices(child);
+			}
 		}
 
-		IDictionary<Node, int> returnedResults = new Dictionary<Node, int>(previousResults);
-		if (candidates.Contains(root))
-		{
-			returnedResults[root] = currentIndex;
-			candidates = candidates.Except([root]).ToArray();
-		}
+		FindIndices(this);
 
-		foreach (var child in root.Children)
-		{
-			currentIndex++;
-			returnedResults = FindIndices(child, candidates, ref currentIndex, returnedResults);
-		}
-
-		return returnedResults;
+		return candidates.Select(node => results.GetValueOrDefault(node, -1)).ToArray();
 	}
 
 	public int FindTreeIndex_(Node candidate)
