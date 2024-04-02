@@ -106,7 +106,14 @@ public class TreeIndexTests
 
 		var result = root.FindIndices([_0, _27, _34]);
 
-		Assert.Equal([0, 27, 34], result);
+		var expected = new Dictionary<Node, int>
+		{
+			[_0] = 0,
+			[_27] = 27,
+			[_34] = 34,
+		};
+
+		Assert.Equal(expected, result);
 	}
 
 	[Fact]
@@ -117,8 +124,14 @@ public class TreeIndexTests
 		var _0 = root;
 
 		var result = root.FindIndices([_34, _27, _0]);
+		var expected = new Dictionary<Node, int>
+		{
+			[_34] = 34,
+			[_27] = 27,
+			[_0] = 0,
+		};
 
-		Assert.Equal([34, 27, 0], result);
+		Assert.Equal(expected, result);
 	}
 
 	[Fact]
@@ -130,8 +143,15 @@ public class TreeIndexTests
 		var _0 = root;
 
 		var result = root.FindIndices([_34, none, _27, _0]);
+		var expected = new Dictionary<Node, int>
+		{
+			[_34]  = 34,
+			[none]  = -1,
+			[_27]  = 27,
+			[_0]  = 0 ,
+		};
 
-		Assert.Equal([34, -1, 27, 0], result);
+		Assert.Equal(expected, result);
 	}
 
 	[Fact]
@@ -152,10 +172,10 @@ public record Node(int Index, Node[] Children)
 	public int FindTreeIndex(Node candidate)
 	{
 		var results = FindIndices([candidate]);
-		return results.FirstOrDefault(-1);
+		return results[candidate];
 	}
 
-	public int[] FindIndices(IEnumerable<Node> candidates)
+	public IDictionary<Node, int> FindIndices(IEnumerable<Node> candidates)
 	{
 		var currentIndex = 0;
 		var results = new Dictionary<Node, int>();
@@ -183,7 +203,7 @@ public record Node(int Index, Node[] Children)
 
 		FindIndices(this);
 
-		return candidates.Select(node => results.GetValueOrDefault(node, -1)).ToArray();
+		return candidates.ToDictionary(candidate => candidate, candidate => results.GetValueOrDefault(candidate, -1));
 	}
 
 	public int FindTreeIndex_(Node candidate)
