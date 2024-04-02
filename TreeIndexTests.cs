@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace TreeIndex;
 
 public class TreeIndexTests
@@ -94,7 +96,31 @@ public class TreeIndexTests
 
 		Assert.Equal(0, result);
 	}
-	
+
+	[Fact]
+	public void Test0_27_34()
+	{
+		var _0 = root;
+		var _27 = root[3][0];
+		var _34 = root[3][1][1];
+
+		var result = root.FindIndices([_0, _27, _34]);
+
+		Assert.Equal([0, 27, 34], result);
+	}
+
+	[Fact]
+	public void Test34_27_0()
+	{
+		var _0 = root;
+		var _27 = root[3][0];
+		var _34 = root[3][1][1];
+
+		var result = root.FindIndices([_0, _27, _34]);
+
+		Assert.Equal([0, 27, 34], result);
+	}
+
 	[Fact]
 	public void TestNone()
 	{
@@ -119,30 +145,34 @@ public record Node(int Index, Node[] Children)
 	public int[] FindIndices(Node[] candidates)
 	{
 		var index = 0;
-		var dictionary = new Dictionary<Node, int>();
-		FindIndices(this, candidates, dictionary, ref index);
+		var result = FindIndices(this, candidates, ref index);
 
-		return dictionary.Values.ToArray();
+		return result.Values.ToArray();
 	}
 
-	private void FindIndices(Node root, Node[] candidates, IDictionary<Node, int> results, ref int currentIndex)
+	private IDictionary<Node, int> FindIndices(Node root, Node[] candidates, ref int currentIndex, IDictionary<Node, int>? previousResults = null)
 	{
+		previousResults ??= ImmutableDictionary<Node, int>.Empty;
+
 		if (!candidates.Any())
 		{
-			return;
+			return previousResults;
 		}
 
+		IDictionary<Node, int> returnedResults = new Dictionary<Node, int>(previousResults);
 		if (candidates.Contains(root))
 		{
-			results[root] = currentIndex;
+			returnedResults[root] = currentIndex;
 			candidates = candidates.Except([root]).ToArray();
 		}
 
 		foreach (var child in root.Children)
 		{
 			currentIndex++;
-			FindIndices(child, candidates, results, ref currentIndex);
+			returnedResults = FindIndices(child, candidates, ref currentIndex, returnedResults);
 		}
+
+		return returnedResults;
 	}
 
 	public int FindTreeIndex_(Node candidate)
