@@ -94,7 +94,7 @@ public class TreeIndexTests
 
 		Assert.Equal(0, result);
 	}
-
+	
 	[Fact]
 	public void TestNone()
 	{
@@ -104,8 +104,6 @@ public class TreeIndexTests
 
 		Assert.Equal(-1, result);
 	}
-
-
 }
 
 public record Node(int Index, Node[] Children)
@@ -113,6 +111,41 @@ public record Node(int Index, Node[] Children)
 	public Node this[int index] => Children[index];
 
 	public int FindTreeIndex(Node candidate)
+	{
+		var results = FindIndices([candidate]);
+		return results.FirstOrDefault(-1);
+	}
+
+	public int[] FindIndices(Node[] candidates)
+	{
+		var index = 0;
+		var dictionary = new Dictionary<Node, int>();
+		FindIndices(this, candidates, dictionary, ref index);
+
+		return dictionary.Values.ToArray();
+	}
+
+	private void FindIndices(Node root, Node[] candidates, IDictionary<Node, int> results, ref int currentIndex)
+	{
+		if (!candidates.Any())
+		{
+			return;
+		}
+
+		if (candidates.Contains(root))
+		{
+			results[root] = currentIndex;
+			candidates = candidates.Except([root]).ToArray();
+		}
+
+		foreach (var child in root.Children)
+		{
+			currentIndex++;
+			FindIndices(child, candidates, results, ref currentIndex);
+		}
+	}
+
+	public int FindTreeIndex_(Node candidate)
 	{
 		(bool Found, int Index) FindTreeIndexImpl(Node tree)
 		{
